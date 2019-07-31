@@ -1,0 +1,8 @@
+{
+  "domain": "hfweather",
+  "name": "hfweather",
+  "documentation": "https://github.com/aalavender/HFWeather",
+  "dependencies": [],
+  "codeowners": ["@aalavender"],
+  "requirements": []
+}
