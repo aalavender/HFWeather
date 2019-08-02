@@ -94,23 +94,23 @@ CONDITION_MAP = {
     '513': 'hail',  # 严重霾
 }
 
-SUGGESTION_MAP = {
-    'air': '空气',
-    'drsg': '穿衣',
-    'uv': '紫外线',
-    'comf': '舒适度',
-    'flu': '感冒',
-    'sport': '运动',
-    'trav': '旅游',
-    'cw': '洗车'
-}
+# SUGGESTION_MAP = {
+#     'air': '空气',
+#     'drsg': '穿衣',
+#     'uv': '紫外线',
+#     'comf': '舒适度',
+#     'flu': '感冒',
+#     'sport': '运动',
+#     'trav': '旅游',
+#     'cw': '洗车'
+# }
 
 _LOGGER = logging.getLogger(__name__)
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     add_entities([HFWeather(api_key=config.get(CONF_API_KEY),
                             location=config.get(ATTR_LOCATION, 'CN101210201'),  #默认为湖州
-                            name=config.get(CONF_NAME, '和风天气'))])
+                            name=config.get(CONF_NAME, '天气助手'))])
 
 
 class HFWeather(WeatherEntity):
@@ -135,7 +135,7 @@ class HFWeather(WeatherEntity):
         return self._name
 
     @property
-    def state(self):
+    def condition(self):
         """Return the weather condition."""
         if self._now_weather_data:
             return CONDITION_MAP[self._now_weather_data["cond"]["code"]]
