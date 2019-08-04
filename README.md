@@ -27,7 +27,8 @@ weather:
 | scan_interval  | 更新频率，单位秒，默认30秒一次，有点快 |
 
 # 前台界面
-    前台界面有三种不同的选择
+前台界面有三种不同的选择
+
     1) lovelace的weather-forcast卡片
     2) 动态图标版 https://github.com/bramkragten/weather-card
     3) 综合版（推荐） https://github.com/cnk700i/ha_modified_components/tree/master/hf_weather
