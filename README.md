@@ -29,9 +29,9 @@ weather:
 # 前台界面
 前台界面有三种不同的选择
 
-    1) lovelace的weather-forcast卡片
-    2) 动态图标版 https://github.com/bramkragten/weather-card
-    3) 综合版（推荐） https://github.com/cnk700i/ha_modified_components/tree/master/hf_weather
+- lovelace的weather-forcast卡片
+- 动态图标版 https://github.com/bramkragten/weather-card
+- 综合版（推荐） https://github.com/cnk700i/ha_modified_components/tree/master/hf_weather
     
 ### 程序说明（写给自己看的，请绕道）
 天气插件获取的数据分为 *基础数据* 和 *进阶数据* 
