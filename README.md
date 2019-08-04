@@ -27,10 +27,10 @@ weather:
 | scan_interval  | 更新频率，单位秒，默认30秒一次，有点快 |
 
 # 前台界面
-    前台界面有三种不同的选择
-    1) lovelace的weather-forcast卡片
-    2) 动态图标版 https://github.com/bramkragten/weather-card
-    3) 综合版（推荐） https://github.com/cnk700i/ha_modified_components/tree/master/hf_weather
+前台界面有三种不同的选择
+- lovelace的weather-forcast卡片
+- 动态图标版 https://github.com/bramkragten/weather-card
+- 综合版（推荐） https://github.com/cnk700i/ha_modified_components/tree/master/hf_weather
     
 ### 程序说明（写给自己看的，请绕道）
 天气插件获取的数据分为 *基础数据* 和 *进阶数据* 
@@ -49,7 +49,7 @@ weather:
     12) state_attributes 相关属性值（已实现将基础数据全部放入属性）
     13) state 当前天气状态（已实现，返回condition）
     14) condition 当前天气状态
-* 进阶数据，包括日出日落/月升月落/空气质量/小时预报和生活建议等数据，主要看得看数据源     
+* 进阶数据，包括空气质量/小时预报和生活建议等数据，主要看得看数据源     
     1) suggestion 生活建议信息
     2) aqi 空气质量信息
     3) hourly_forecast 小时预报信息
