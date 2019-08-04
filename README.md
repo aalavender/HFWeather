@@ -28,7 +28,7 @@ weather:
 
 # 前台界面
 前台界面有三种不同的选择
-- lovelace的weather-forcast卡片
+- lovelace的 [weather forcast](https://www.home-assistant.io/lovelace/weather-forecast/)
 - 动态图标版 https://github.com/bramkragten/weather-card
 - 综合版（推荐） https://github.com/cnk700i/ha_modified_components/tree/master/hf_weather
     
