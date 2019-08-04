@@ -9,12 +9,29 @@
 # 配置
 **Example configuration.yaml:**
 ```yaml
-
+weather:
+  - platform: hfweather
+    name: 天气助手
+    api_key: fab1b**********87d1b7ae386de03dc
+    region: CN101210201
+    scan_interval: 600
 ```
 
 **Configuration variables:**
 
+|  key   | description  |
+|  ----  | ----  |
+| name  | 名称，不设置，默认为“天气助手” |
+| api_key  | 京东万象的appkey |
+| region  | [城市编号](https://where.heweather.com/index.html) |
+| scan_interval  | 更新频率，单位秒，默认30秒一次，有点快 |
 
+# 前台界面
+    前台界面有三种不同的选择
+    1) lovelace的weather-forcast卡片
+    2) 动态图标版 https://github.com/bramkragten/weather-card
+    3) 综合版（推荐） https://github.com/cnk700i/ha_modified_components/tree/master/hf_weather
+    
 ### 程序说明（写给自己看的，请绕道）
 天气插件获取的数据分为 *基础数据* 和 *进阶数据* 
 * 基础数据，能满足lovelace界面中Weather Forecast Card的需求，具体数据项可以参考[官网](https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/weather/__init__.py)
@@ -32,4 +49,10 @@
     12) state_attributes 相关属性值（已实现将基础数据全部放入属性）
     13) state 当前天气状态（已实现，返回condition）
     14) condition 当前天气状态
-* 进阶数据，包括日出日落/月升月落/空气质量/小时预报和生活建议等数据，主要看得看数据源
+* 进阶数据，包括日出日落/月升月落/空气质量/小时预报和生活建议等数据，主要看得看数据源     
+    1) suggestion 生活建议信息
+    2) aqi 空气质量信息
+    3) hourly_forecast 小时预报信息
+    4) update_time 数据源更新时间
+    5) 当前天气状态 中文
+    6) 自定义更多天气信息属性

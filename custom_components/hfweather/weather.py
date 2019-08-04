@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+#from datetime import datetime, timedelta
 
 #https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/weather/__init__.py
 from homeassistant.components.weather import (
@@ -7,7 +7,7 @@ from homeassistant.components.weather import (
     ATTR_FORECAST_WIND_SPEED)
 
 #https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/const.py
-from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT, CONF_API_KEY, ATTR_LOCATION, CONF_NAME)
+from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT, CONF_API_KEY, CONF_REGION, CONF_NAME)
 
 import requests
 import json
@@ -15,6 +15,14 @@ import logging
 
 VERSION = '0.1.0'
 DOMAIN = 'hfweather'
+
+ATTR_AQI = "aqi"
+ATTR_HOURLY_FORECAST = "hourly_forecast"
+ATTR_SUGGESTION = "suggestion"
+ATTR_PRECIPITATION_PROBABILITY = "precipitation_probability"
+ATTR_UPDATE_TIME = "update_time"
+ATTR_CONDITION_CN = "condition_cn"
+ATTR_CUSTOM_UI_MORE_INFO = "custom_ui_more_info"
 
 # mapping status, why? because
 # https://github.com/home-assistant/home-assistant-polymer/blob/master/src/cards/ha-weather-card.js#L279
@@ -94,31 +102,31 @@ CONDITION_MAP = {
     '513': 'hail',  # 严重霾
 }
 
-# SUGGESTION_MAP = {
-#     'air': '空气',
-#     'drsg': '穿衣',
-#     'uv': '紫外线',
-#     'comf': '舒适度',
-#     'flu': '感冒',
-#     'sport': '运动',
-#     'trav': '旅游',
-#     'cw': '洗车'
-# }
+SUGGESTION_MAP = {
+    'air': '空气',
+    'drsg': '穿衣',
+    'uv': '紫外',
+    'comf': '体感',
+    'flu': '感冒',
+    'sport': '运动',
+    'trav': '旅游',
+    'cw': '洗车'
+}
 
 _LOGGER = logging.getLogger(__name__)
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     add_entities([HFWeather(api_key=config.get(CONF_API_KEY),
-                            location=config.get(ATTR_LOCATION, 'CN101210201'),  #默认为湖州
+                            region=config.get(CONF_REGION, 'CN101210201'),  #默认为湖州
                             name=config.get(CONF_NAME, '天气助手'))])
 
 
 class HFWeather(WeatherEntity):
     """Representation of a weather condition."""
 
-    def __init__(self, api_key: str, location: str, name: str):
+    def __init__(self, api_key: str, region: str, name: str):
         self._api_key = api_key
-        self._api_location = location
+        self._region = region
         self._name = name
         self._msg = "初始化"
         self._data_source_update = None # 数据源更新时间
@@ -143,6 +151,13 @@ class HFWeather(WeatherEntity):
             return self._msg
 
     @property
+    def condition_cn(self):
+        """Return the weather condition by txt"""
+        if self._now_weather_data:
+            return self._now_weather_data["cond"]["txt"]
+        else:
+            return self._msg
+    @property
     def temperature(self):
         if self._now_weather_data:
             return float(self._now_weather_data['tmp'])
@@ -157,7 +172,7 @@ class HFWeather(WeatherEntity):
     def pressure(self):
         """大气压强"""
         if self._now_weather_data:
-            return self._now_weather_data['pres']
+            return float(self._now_weather_data['pres'])
         else:
             return self._msg
 
@@ -172,7 +187,7 @@ class HFWeather(WeatherEntity):
     def wind_speed(self):
         """风速"""
         if self._now_weather_data:
-            return self._now_weather_data["wind"]["spd"]
+            return float(self._now_weather_data["wind"]["spd"])
         else:
             return self._msg
 
@@ -180,7 +195,7 @@ class HFWeather(WeatherEntity):
     def wind_bearing(self):
         """风向"""
         if self._now_weather_data:
-            return self._now_weather_data["wind"]["dir"]
+            return float(self._now_weather_data["wind"]["deg"])
         else:
             return self._msg
 
@@ -208,21 +223,27 @@ class HFWeather(WeatherEntity):
     @property
     def state_attributes(self):
         data = super(HFWeather, self).state_attributes
+        data[ATTR_SUGGESTION] = self.suggestion
+        data[ATTR_AQI] = self.aqi
+        data[ATTR_HOURLY_FORECAST] = self.hourly_forecast
+        data[ATTR_UPDATE_TIME] = self.update_time
+        data[ATTR_CONDITION_CN] = self.condition_cn
+        data[ATTR_CUSTOM_UI_MORE_INFO] = "hf_weather-more-info"
         return data
 
     @property
     def forecast(self):
+        """天为单位的预报"""
         forecast_data = []
         if self._daily_forecast_data:
             for i in range(len(self._daily_forecast_data)):
                 data_dict = {
-                    ATTR_FORECAST_TIME: datetime.strptime(self._daily_forecast_data[i]["date"], '%Y-%m-%d'),
+                    ATTR_FORECAST_TIME: self._daily_forecast_data[i]["date"],
                     ATTR_FORECAST_CONDITION: CONDITION_MAP[self._daily_forecast_data[i]["cond"]["code_d"]],
-                    ATTR_FORECAST_PRECIPITATION: self._daily_forecast_data[i]["pcpn"],
+                    ATTR_FORECAST_PRECIPITATION: float(self._daily_forecast_data[i]["pcpn"]),  #降水量
+                    ATTR_PRECIPITATION_PROBABILITY: float(self._daily_forecast_data[i]["pop"]),  # 降水概率
                     ATTR_FORECAST_TEMP: float(self._daily_forecast_data[i]['tmp']['max']),
-                    ATTR_FORECAST_TEMP_LOW: float(self._daily_forecast_data[i]['tmp']['min']),
-                    ATTR_FORECAST_WIND_BEARING: self._daily_forecast_data[i]['wind']['dir'],
-                    ATTR_FORECAST_WIND_SPEED: self._daily_forecast_data[i]['wind']['spd']
+                    ATTR_FORECAST_TEMP_LOW: float(self._daily_forecast_data[i]['tmp']['min'])
                 }
                 forecast_data.append(data_dict)
 
@@ -231,75 +252,51 @@ class HFWeather(WeatherEntity):
     # =======================================
     # 以下属性基类中不涉及，属于自定义数据
     # =======================================
-    # @property
-    # def pm25(self):
-    #     """pm25，质量浓度值"""
-    #     if self._now_air_data:
-    #         return self._now_air_data['pm25']
-    #     else:
-    #         return self._msg
-    #
-    # @property
-    # def pm10(self):
-    #     """pm10，质量浓度值"""
-    #     if self._now_air_data:
-    #         return self._now_air_data['pm10']
-    #     else:
-    #         return self._msg
-    #
-    # @property
-    # def no2(self):
-    #     """二氧化氮，质量浓度值"""
-    #     if self._now_air_data:
-    #         return self._now_air_data['no2']
-    #     else:
-    #         return self._msg
-    #
-    # @property
-    # def so2(self):
-    #     """二氧化硫，质量浓度值"""
-    #     if self._now_air_data:
-    #         return self._now_air_data['so2']
-    #     else:
-    #         return self._msg
-    #
-    # @property
-    # def co(self):
-    #     """一氧化碳，质量浓度值"""
-    #     if self._now_air_data:
-    #         return self._now_air_data['co']
-    #     else:
-    #         return self._msg
-    #
-    # @property
-    # def aqi(self):
-    #     """AQI（国标）"""
-    #     if self._now_air_data:
-    #         return self._now_air_data['aqi']
-    #     else:
-    #         return self._msg
-    #
-    # @property
-    # def aqi_description(self):
-    #     """AQI（国标）描述"""
-    #     if self._now_air_data:
-    #         return self._now_air_data['qlty']
-    #     else:
-    #         return self._msg
-    #
-    # @property
-    # def wind_level(self):
-    #     """风力 """
-    #     if self._now_weather_data:
-    #         return self._now_weather_data["wind"]["sc"]
-    #     else:
-    #         return self._msg
+    @property
+    def suggestion(self):
+        """生活建议，返回字典数组"""
+        if self._now_life_data:
+            return [{'title': k, 'title_cn': SUGGESTION_MAP.get(k,k), 'brf': v.get('brf'),
+                                    'txt': v.get('txt') } for k, v in self._now_life_data.items()]
+        else:
+            return self._msg
+
+    @property
+    def aqi(self):
+        """AQI（国标）"""
+        if self._now_air_data:
+            return self._now_air_data
+        else:
+            return self._msg
+
+    @property
+    def update_time(self):
+        """数据源更新时间."""
+        if self._data_source_update:
+            return self._data_source_update
+        else:
+            return self._msg
+    @property
+    def hourly_forecast(self):
+        """小时为单位的预报"""
+        forecast_data = []
+        if self._hourly_forecast_data:
+            for i in range(len(self._hourly_forecast_data)):
+                data_dict = {
+                    ATTR_FORECAST_TIME: self._hourly_forecast_data[i]["date"],
+                    ATTR_FORECAST_CONDITION: CONDITION_MAP[self._hourly_forecast_data[i]["cond"]["code"]],
+                    ATTR_PRECIPITATION_PROBABILITY: float(self._hourly_forecast_data[i]["pop"]),  # 降水概率
+                    ATTR_FORECAST_TEMP: float(self._hourly_forecast_data[i]['tmp'])
+                }
+                forecast_data.append(data_dict)
+
+        return forecast_data
 
     def update(self):
         _LOGGER.info("HFWeather updating …… ")
 
         json_text = requests.get(
-            str.format("https://way.jd.com/he/freeweather?city={}&appkey={}", self._api_location,
+            str.format("https://way.jd.com/he/freeweather?city={}&appkey={}", self._region,
                        self._api_key)).content
         json_data = json.loads(json_text)
         self._msg = json_data["msg"]    # 查询结果说明
