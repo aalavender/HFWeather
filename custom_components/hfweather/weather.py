@@ -12,6 +12,7 @@ from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT, CONF_API_KEY, CO
 import requests
 import json
 import logging
+import asyncio
 
 VERSION = '0.1.0'
 DOMAIN = 'hfweather'
@@ -115,10 +116,13 @@ SUGGESTION_MAP = {
 
 _LOGGER = logging.getLogger(__name__)
 
-def setup_platform(hass, config, add_entities, discovery_info=None):
-    add_entities([HFWeather(api_key=config.get(CONF_API_KEY),
+
+@asyncio.coroutine
+def async_setup_platform(hass, config, async_add_devices, discovery_info=None):
+    _LOGGER.info("async_setup_platform sensor HFWeather")
+    async_add_devices([HFWeather(api_key=config.get(CONF_API_KEY),
                             region=config.get(CONF_REGION, 'CN101210201'),  #默认为湖州
-                            name=config.get(CONF_NAME, '天气助手'))])
+                            name=config.get(CONF_NAME, '天气助手'))], True)
 
 
 class HFWeather(WeatherEntity):
@@ -135,8 +139,6 @@ class HFWeather(WeatherEntity):
         self._now_life_data = None      # 存储实况生活指数数据
         self._daily_forecast_data = None    # 存储天气预报数据（每天）
         self._hourly_forecast_data = None   # 存储天气预报数据（每小时）
-
-        self.update()
 
     @property
     def name(self):
@@ -293,7 +295,7 @@ class HFWeather(WeatherEntity):
         return forecast_data
 
     def update(self):
-        _LOGGER.info("HFWeather updating …… ")
+        _LOGGER.info("HFWeather updating from  https://way.jd.com/he/freeweather")
 
         json_text = requests.get(
             str.format("https://way.jd.com/he/freeweather?city={}&appkey={}", self._region,
